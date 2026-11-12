@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Willog Stopwatch</title>
+<style>
+  :root {
+    --page:#eef2f7; --card:#ffffff; --surface:#f8fafc; --navy:#0b2545; --navy-2:#13315c;
+    --blue:#2563eb; --blue-soft:#eff6ff; --mint:#10b981; --mint-soft:#d1fae5; --amber:#f59e0b; --amber-soft:#fef3c7;
+    --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --shadow:0 24px 60px rgba(11,37,69,.16);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page:#060d18; --card:#0e1a2b; --surface:#122236; --navy:#e2ecff; --navy-2:#0a1626;
+      --blue:#4f8cff; --blue-soft:#13274a; --mint:#34d399; --mint-soft:#0f3b2e; --amber:#fbbf24; --amber-soft:#3d2e0a;
+      --text:#e6edf7; --muted:#8a9bb4; --line:#1f3149; --shadow:0 24px 60px rgba(0,0,0,.5);
+    }
+    .bar { background:#0a1626 !important; border-bottom:1px solid var(--line); }
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--page); color:var(--text); min-height:100vh;
+         font-family:"Pretendard","Segoe UI","Malgun Gothic",sans-serif;
+         display:flex; justify-content:center; align-items:flex-start; padding:40px 16px; }
+  .mono { font-family:"JetBrains Mono",Consolas,"SF Mono",monospace; font-variant-numeric:tabular-nums; }
+  .device { width:100%; max-width:460px; background:var(--card); border-radius:28px; overflow:hidden; box-shadow:var(--shadow); }
+
+  /* 상태바 */
+  .bar { background:#0b2545; color:#b6c4d8; display:flex; justify-content:space-between; align-items:center; padding:14px 20px; font-size:12px; }
+  .brand { display:flex; align-items:center; gap:10px; color:#fff; font-weight:800; letter-spacing:.5px; font-size:16px; }
+  .brand small { font-weight:500; color:#8aa0bd; font-size:11px; letter-spacing:1.5px; }
+  .status { display:flex; gap:10px; align-items:center; }
+  .status svg { display:block; }
+  .sync { display:flex; align-items:center; gap:5px; }
+  .sync .led { width:6px; height:6px; border-radius:50%; background:#5b6b82; }
+  .device.running .sync .led { background:#34d399; box-shadow:0 0 8px #34d399; animation:pulse 1.2s infinite; }
+
+  /* 메인 */
+  .main { padding:26px 24px 6px; }
+  .top { display:flex; justify-content:space-between; align-items:center; }
+  .state { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:5px 11px; border-radius:99px; background:var(--surface); color:var(--muted); }
+  .state .dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .state.live { background:var(--mint-soft); color:var(--mint); }
+  .state.live .dot { animation:pulse 1.2s infinite; }
+  .state.paused { background:var(--amber-soft); color:var(--amber); }
+  .shipment { font-size:11px; color:var(--muted); }
+  @keyframes pulse { 50% { opacity:.3; } }
+  .label { font-size:12px; color:var(--muted); margin-top:22px; letter-spacing:.5px; }
+  .time { font-size:clamp(44px,13vw,60px); font-weight:700; color:var(--navy); letter-spacing:-1.5px; line-height:1.1; margin:2px 0 22px; }
+  .time small { font-size:.5em; color:var(--muted); font-weight:500; letter-spacing:0; }
+  .time { margin-bottom:12px; }
+
+  /* 샘플링 바: 1초마다 센서 샘플 1칸 */
+  .sampling { display:flex; align-items:center; gap:10px; margin:0 0 20px; }
+  .ticks { flex:1; display:grid; grid-template-columns:repeat(60,1fr); gap:2px; height:14px; }
+  .ticks i { background:var(--line); border-radius:1px; transition:background .2s, transform .2s; }
+  .ticks i.on { background:var(--blue); opacity:.55; }
+  .ticks i.now { background:var(--mint); opacity:1; transform:scaleY(1.35); }
+  .ticks i.q { background:var(--blue); opacity:1; }
+  .sampling span { font-size:10px; color:var(--muted); white-space:nowrap; }
+
+  /* 경로 */
+  .route { position:relative; height:44px; margin:0 10px; }
+  .route .track { position:absolute; top:15px; left:0; right:0; height:3px; border-radius:2px; background:var(--line); overflow:hidden; }
+  .route .track::after { content:""; position:absolute; inset:0; width:30%; transform:translateX(-100%);
+                         background:linear-gradient(90deg,transparent,var(--blue),transparent); opacity:0; }
+  .device.running .route .track::after { opacity:.6; animation:flow 1.6s linear infinite; }
+  @keyframes flow { to { transform:translateX(340%); } }
+  .route .node { position:absolute; top:10px; width:13px; height:13px; border-radius:50%; background:var(--card);
+                 border:3px solid var(--blue); transform:translateX(-50%); transition:left .25s ease; }
+  .route .node.origin { background:var(--blue); }
+  .route .cur { position:absolute; top:6px; left:100%; transform:translateX(-50%); width:21px; height:21px; border-radius:50%;
+                background:var(--blue); box-shadow:0 0 0 5px var(--blue-soft); display:grid; place-items:center; }
+  .route .cur svg { width:11px; height:11px; }
+  .route .tag { position:absolute; top:30px; font-size:10px; color:var(--muted); transform:translateX(-50%); white-space:nowrap; }
+  .route .tag.start { transform:none; left:0; } .route .tag.end { transform:none; right:0; left:auto; }
+
+  /* 요약 */
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0 20px; }
+  .stat { background:var(--surface); border-radius:14px; padding:10px 12px; }
+  .stat span { display:block; font-size:11px; color:var(--muted); }
+  .stat b { display:block; font-size:15px; margin-top:2px; color:var(--text); }
+
+  /* 버튼 */
+  .controls { display:grid; grid-template-columns:1fr 1.6fr 1fr; gap:10px; padding:0 24px 22px; }
+  button { height:54px; border-radius:16px; border:1px solid var(--line); background:var(--card); font:inherit;
+           font-size:15px; font-weight:700; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+           transition:transform .08s, background .2s, opacity .2s; }
+  button:active:not(:disabled) { transform:scale(.97); }
+  button:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+  button:disabled { opacity:.35; cursor:default; }
+  button.primary { background:var(--blue); border-color:var(--blue); color:#fff; }
+  button.primary.pause { background:#0b2545; border-color:#0b2545; }
+  @media (prefers-color-scheme: dark) { button.primary.pause { background:#1f3149; border-color:#1f3149; } }
+
+  /* 로그 */
+  .log { border-top:1px solid var(--line); padding:18px 24px 8px; }
+  .log-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .log h2 { font-size:13px; color:var(--muted); font-weight:700; }
+  .legend { display:flex; gap:10px; font-size:11px; color:var(--muted); }
+  .legend i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; vertical-align:0; }
+  .log ol { list-style:none; max-height:260px; overflow:auto; }
+  .log li { display:grid; grid-template-columns:52px 1fr auto; gap:12px; align-items:center; padding:11px 0; border-bottom:1px dashed var(--line); }
+  .log li:last-child { border-bottom:none; }
+  .cp { font-size:11px; background:var(--blue-soft); color:var(--blue); padding:4px 0; border-radius:7px; font-weight:700; text-align:center; }
+  .seg { font-size:14px; font-weight:700; }
+  .barwrap { height:4px; background:var(--surface); border-radius:2px; margin-top:6px; overflow:hidden; }
+  .barwrap i { display:block; height:100%; background:var(--blue); border-radius:2px; }
+  li.best .barwrap i { background:var(--mint); } li.best .seg { color:var(--mint); }
+  li.worst .barwrap i { background:var(--amber); } li.worst .seg { color:var(--amber); }
+  .meta { color:var(--muted); font-size:11px; text-align:right; line-height:1.5; }
+  .empty { display:block !important; color:var(--muted); font-size:13px; text-align:center; padding:22px 0 18px !important; }
+  .empty svg { display:block; margin:0 auto 8px; opacity:.5; }
+
+  .foot { display:flex; justify-content:center; gap:14px; padding:12px 24px 20px; font-size:11px; color:var(--muted); }
+  kbd { font-family:inherit; font-size:10px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 5px; margin-right:3px; background:var(--surface); }
+
+  button { white-space:nowrap; }
+  .foot { flex-wrap:wrap; row-gap:6px; }
+  @media (max-width:420px) {
+    .main, .log { padding-left:18px; padding-right:18px; }
+    .controls { padding:0 18px 20px; gap:8px; grid-template-columns:1.15fr 1.5fr 0.9fr; }
+    button { font-size:14px; gap:4px; }
+    .stat { padding:9px 10px; } .stat b { font-size:14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::after { animation:none !important; transition:none !important; } }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<main class="device" id="device">
+  <header class="bar">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1" y="1" width="22" height="22" rx="7" fill="#2563eb"/>
+        <path d="M6 15.5a6 6 0 0 1 12 0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".55"/>
+        <path d="M8.8 15.5a3.2 3.2 0 0 1 6.4 0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="15.5" r="1.6" fill="#34d399"/>
+      </svg>
+      <span>Willog <small>LOGISTICS IoT</small></span>
+    </div>
+    <div class="status mono" aria-label="기기 상태">
+      <span class="sync"><span class="led"></span><span id="syncText">STANDBY</span></span>
+      <svg width="16" height="12" viewBox="0 0 16 12" aria-label="신호 강함"><rect x="0" y="8" width="3" height="4" rx="1" fill="#b6c4d8"/><rect x="4.3" y="5.5" width="3" height="6.5" rx="1" fill="#b6c4d8"/><rect x="8.6" y="3" width="3" height="9" rx="1" fill="#b6c4d8"/><rect x="12.9" y="0" width="3" height="12" rx="1" fill="#b6c4d8"/></svg>
+      <svg width="22" height="12" viewBox="0 0 22 12" aria-label="배터리 92%"><rect x=".5" y=".5" width="18" height="11" rx="3" fill="none" stroke="#b6c4d8"/><rect x="2.5" y="2.5" width="13" height="7" rx="1.5" fill="#34d399"/><rect x="19.5" y="4" width="2" height="4" rx="1" fill="#b6c4d8"/></svg>
+    </div>
+  </header>
+
+  <section class="main">
+    <div class="top">
+      <span class="state" id="state" role="status" aria-live="polite"><span class="dot"></span><span id="stateText">대기 중</span></span>
+      <span class="shipment mono">DEVICE WL-0427</span>
+    </div>
+    <div class="label">운송 경과 시간</div>
+    <div class="time mono" id="time" aria-label="경과 시간">00:00:00<small>.00</small></div>
+    <div class="sampling" aria-hidden="true">
+      <div class="ticks" id="ticks"></div>
+      <span class="mono" id="sampleText">0 / 60s</span>
+    </div>
+
+    <div class="route" id="route" aria-hidden="true">
+      <div class="track"></div>
+      <div class="node origin" style="left:0"></div>
+      <div class="cur"><svg viewBox="0 0 12 12"><path d="M2 6h8M7 3l3 3-3 3" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="tag start">출발</span><span class="tag end">현재 위치</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span>체크포인트</span><b class="mono" id="sCount">0</b></div>
+      <div class="stat"><span>평균 구간</span><b class="mono" id="sAvg">—</b></div>
+      <div class="stat"><span>최장 구간</span><b class="mono" id="sMax">—</b></div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <button id="cpBtn" disabled aria-keyshortcuts="C">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 15s5-4.6 5-8.5A5 5 0 0 0 3 6.5C3 10.4 8 15 8 15z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="6.5" r="1.7" fill="currentColor"/></svg>
+      체크포인트
+    </button>
+    <button id="startBtn" class="primary" aria-keyshortcuts="Space">운송 시작</button>
+    <button id="resetBtn" disabled aria-keyshortcuts="R">초기화</button>
+  </div>
+
+  <section class="log">
+    <div class="log-head">
+      <h2>운송 이벤트 로그</h2>
+      <div class="legend"><span><i style="background:var(--mint)"></i>최단</span><span><i style="background:var(--amber)"></i>최장</span></div>
+    </div>
+    <ol id="log"></ol>
+  </section>
+
+  <footer class="foot">
+    <span><kbd>Space</kbd>시작/일시정지</span><span><kbd>C</kbd>체크포인트</span><span><kbd>R</kbd>초기화</span>
+  </footer>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  let running=false, st=0, el=0, raf, lastCp=0, cps=[], lastSec=-1;
+  const ticks=Array.from({length:60},()=>{ const i=document.createElement('i'); $('ticks').appendChild(i); return i; });
+  const pad=(n,l=2)=>String(n).padStart(l,'0');
+  function fmt(ms){
+    const cs=Math.floor(ms/10)%100, s=Math.floor(ms/1000)%60, m=Math.floor(ms/60000)%60, h=Math.floor(ms/3600000);
+    return { main:`${pad(h)}:${pad(m)}:${pad(s)}`, short:(h?`${h}:`:'')+`${pad(m)}:${pad(s)}`, cs:'.'+pad(cs) };
+  }
+  const clock=()=>{ const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+  const now=()=>running?el+performance.now()-st:el;
+
+  function render(){
+    const t=now(), f=fmt(t);
+    $('time').innerHTML=f.main+'<small>'+f.cs+'</small>';
+    // 체크포인트를 실제 시간 비율 위치로 배치 (현재 위치 = 100%)
+    $('route').querySelectorAll('.node.cp-node').forEach((n,i)=>{
+      const p=t?cps[i].total/t*100:0; n.style.left=p+'%'; n.style.opacity=p>95?.25:1;
+    });
+    // 샘플링 바 (분 단위 사이클, 15초마다 진한 눈금)
+    const sec=Math.floor(t/1000)%60;
+    if(sec!==lastSec){
+      lastSec=sec;
+      ticks.forEach((k,i)=>{ k.className=i<sec?(((i+1)%15===0)?'q':'on'):(i===sec&&t>0?'now':''); });
+      $('sampleText').textContent=`${sec} / 60s`;
+    }
+  }
+  function loop(){ render(); raf=requestAnimationFrame(loop); }
+
+  function setState(){
+    const s=$('state');
+    s.className='state'+(running?' live':el>0?' paused':'');
+    $('stateText').textContent=running?'트래킹 중':el>0?'일시정지':'대기 중';
+    $('syncText').textContent=running?'LIVE':el>0?'HOLD':'STANDBY';
+    $('device').classList.toggle('running',running);
+    const b=$('startBtn'); b.textContent=running?'일시정지':el>0?'운송 재개':'운송 시작'; b.classList.toggle('pause',running);
+    $('cpBtn').disabled=!running; $('resetBtn').disabled=running||el===0;
+  }
+
+  function drawLog(){
+    const ol=$('log');
+    $('sCount').textContent=cps.length;
+    if(!cps.length){
+      ol.innerHTML=`<li class="empty"><svg width="28" height="28" viewBox="0 0 16 16"><path d="M8 15s5-4.6 5-8.5A5 5 0 0 0 3 6.5C3 10.4 8 15 8 15z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="6.5" r="1.7" fill="currentColor"/></svg>운송을 시작하고 체크포인트를 기록해 보세요</li>`;
+      $('sAvg').textContent='—'; $('sMax').textContent='—'; return;
+    }
+    const segs=cps.map(c=>c.seg), max=Math.max(...segs), min=Math.min(...segs);
+    const avg=segs.reduce((a,b)=>a+b,0)/segs.length;
+    const fa=fmt(avg), fm=fmt(max); $('sAvg').textContent=fa.short+fa.cs; $('sMax').textContent=fm.short+fm.cs;
+    ol.innerHTML=cps.map((c,i)=>{
+      const seg=fmt(c.seg), tot=fmt(c.total);
+      const cls=cps.length>1?(c.seg===min?'best':c.seg===max?'worst':''):'';
+      return `<li class="${cls}"><span class="cp mono">CP-${pad(i+1)}</span>
+        <div><span class="seg mono">+${seg.short}${seg.cs}</span><div class="barwrap"><i style="width:${Math.max(4,c.seg/max*100)}%"></i></div></div>
+        <span class="meta mono">${c.clock}<br>Σ ${tot.short}${tot.cs}</span></li>`;
+    }).reverse().join('');
+  }
+
+  function toggle(){
+    if(running){ el=now(); running=false; cancelAnimationFrame(raf); render(); }
+    else { st=performance.now(); running=true; loop(); }
+    setState();
+  }
+  function checkpoint(){
+    if(!running) return; const total=now();
+    cps.push({seg:total-lastCp,total,clock:clock()}); lastCp=total;
+    const n=document.createElement('div'); n.className='node cp-node'; n.style.left='100%';
+    $('route').insertBefore(n,$('route').querySelector('.cur'));
+    drawLog();
+  }
+  function reset(){
+    if(running) return; el=0; lastCp=0; cps=[];
+    $('route').querySelectorAll('.cp-node').forEach(n=>n.remove());
+    lastSec=-1; render(); drawLog(); setState();
+  }
+
+  $('startBtn').onclick=toggle; $('cpBtn').onclick=checkpoint; $('resetBtn').onclick=reset;
+  document.addEventListener('keydown',e=>{
+    if(e.repeat||e.ctrlKey||e.metaKey||e.altKey) return;
+    if(e.code==='Space'){ e.preventDefault(); toggle(); }
+    else if(e.code==='KeyC') checkpoint();
+    else if(e.code==='KeyR') reset();
+  });
+  drawLog();
+</script>
+</body>
+</html>
