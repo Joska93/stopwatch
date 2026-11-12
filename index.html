@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stopwatch Gallery</title>
+<style>
+  :root { --bg:#040b16; --card:#081325; --line:#16263d; --text:#e7eef8; --muted:#7b8ba3; --cyan:#38e1ff; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:radial-gradient(1000px 500px at 70% -10%, #0b2142 0%, var(--bg) 60%); color:var(--text);
+         font-family:"Pretendard","Segoe UI","Malgun Gothic",sans-serif; min-height:100vh; padding:56px 16px; }
+  .wrap { max-width:960px; margin:0 auto; }
+  h1 { font-size:28px; letter-spacing:1px; }
+  p.sub { color:var(--muted); margin:8px 0 32px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
+  a.card { display:block; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--line);
+           border-radius:18px; padding:22px; transition:transform .15s, border-color .15s; }
+  a.card:hover, a.card:focus-visible { transform:translateY(-3px); border-color:var(--cyan); outline:none; }
+  .tag { display:inline-block; font-size:11px; color:var(--cyan); border:1px solid var(--line); border-radius:99px; padding:3px 10px; }
+  .card h2 { font-size:18px; margin:14px 0 6px; }
+  .card p { font-size:13px; color:var(--muted); line-height:1.6; }
+  .go { margin-top:16px; font-size:13px; color:var(--cyan); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Stopwatch Gallery</h1>
+  <p class="sub">세 가지 콘셉트의 스탑워치</p>
+  <div class="grid">
+    <a class="card" href="searoute-stopwatch.html">
+      <span class="tag">GLOBAL SEA ROUTE</span>
+      <h2>해상항로 스탑워치</h2>
+      <p>시간이 흐르는 만큼 배가 부산에서 수에즈를 거쳐 로테르담까지 바다를 건넙니다.</p>
+      <div class="go">열기 →</div>
+    </a>
+    <a class="card" href="willog-stopwatch.html">
+      <span class="tag">LOGISTICS IoT</span>
+      <h2>물류 IoT 트래커</h2>
+      <p>화물에 붙는 데이터 로거처럼, 체크포인트와 구간 시간을 기록합니다.</p>
+      <div class="go">열기 →</div>
+    </a>
+    <a class="card" href="stopwatch.html">
+      <span class="tag">BASIC</span>
+      <h2>기본 스탑워치</h2>
+      <p>시작, 랩, 재설정만 담은 깔끔한 스탑워치입니다.</p>
+      <div class="go">열기 →</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>
