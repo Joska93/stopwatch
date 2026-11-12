@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Willog 홍보 영상</title>
+<meta name="description" content="물류의 모든 여정을 투명하게. 윌로그 30초 홍보 영상">
+<meta property="og:title" content="Willog 홍보 영상">
+<meta property="og:description" content="물류의 모든 여정을 투명하게. 윌로그 30초 홍보 영상">
+<meta property="og:type" content="video.other">
+<meta property="og:image" content="https://joska93.github.io/stopwatch/willog-promo/poster.jpg">
+<meta property="og:video" content="https://joska93.github.io/stopwatch/willog-promo/willog_promo_30s.mp4">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root { --bg:#f3ede2; --ink:#1b264a; --muted:#6b6a72; --blue:#2f5bea; --coral:#ff6b4a; --mint:#3cc8a0; --card:#fffdf8; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); min-height:100vh;
+         font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
+         background-image:radial-gradient(circle, rgba(27,38,74,.10) 1.6px, transparent 1.7px);
+         background-size:22px 22px; padding:48px 16px 64px; }
+  .wrap { max-width:1040px; margin:0 auto; }
+  .eyebrow { display:inline-flex; gap:8px; align-items:center; font-size:12px; letter-spacing:2px; font-weight:700; color:var(--coral); }
+  .eyebrow i { width:8px; height:8px; border-radius:50%; background:var(--coral); display:inline-block; }
+  h1 { font-size:clamp(28px, 5vw, 46px); line-height:1.2; margin:12px 0 8px; letter-spacing:-.5px; }
+  h1 b { color:var(--blue); }
+  p.sub { color:var(--muted); font-size:16px; margin-bottom:28px; }
+  .frame { background:var(--card); padding:12px; border-radius:20px;
+           box-shadow:8px 12px 0 rgba(40,28,18,.10), 0 18px 40px rgba(40,28,18,.12); transform:rotate(-.4deg); }
+  video { display:block; width:100%; aspect-ratio:16/9; border-radius:12px; background:#000; }
+  .meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+  .chip { background:var(--card); border-radius:99px; padding:8px 14px; font-size:13px; box-shadow:3px 4px 0 rgba(40,28,18,.08); }
+  .chip.c1 { border-left:6px solid var(--blue); } .chip.c2 { border-left:6px solid var(--coral); } .chip.c3 { border-left:6px solid var(--mint); }
+  .actions { margin-top:28px; display:flex; flex-wrap:wrap; gap:12px; }
+  a.btn { text-decoration:none; font-weight:700; font-size:14px; padding:12px 20px; border-radius:12px; }
+  a.primary { background:var(--ink); color:#fff; }
+  a.ghost { color:var(--ink); background:var(--card); box-shadow:3px 4px 0 rgba(40,28,18,.08); }
+  a.btn:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <span class="eyebrow"><i></i>WILLOG · MOTION GRAPHIC</span>
+  <h1>물류의 모든 여정을 <b>투명하게.</b></h1>
+  <p class="sub">점묘화와 페이퍼 컷아웃으로 만든 윌로그 30초 홍보 영상</p>
+  <div class="frame">
+    <video controls playsinline preload="metadata" poster="poster.jpg">
+      <source src="willog_promo_30s.mp4" type="video/mp4">
+      이 브라우저는 영상 재생을 지원하지 않습니다. <a href="willog_promo_30s.mp4">영상 파일 열기</a>
+    </video>
+  </div>
+  <div class="meta">
+    <span class="chip c1">30초 · 16:9 · 1080p</span>
+    <span class="chip c2">키네틱 타이포그래피</span>
+    <span class="chip c3">내레이션 + 배경음악</span>
+  </div>
+  <div class="actions">
+    <a class="btn primary" href="willog_promo_30s.mp4" download>영상 다운로드</a>
+    <a class="btn ghost" href="../">갤러리로 돌아가기</a>
+  </div>
+</main>
+</body>
+</html>
